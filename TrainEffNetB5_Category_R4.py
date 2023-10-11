@@ -18,7 +18,7 @@ from keras.callbacks import Callback
 
 import tensorflow as tf
 
-os.environ["CUDA_VISIBLE_DEVICES"]="0"
+# os.environ["CUDA_VISIBLE_DEVICES"]="0"
 
 from PIL import Image, ImageFile
 ImageFile.LOAD_TRUNCATED_IMAGES = True
@@ -27,13 +27,13 @@ batch_size = 8
 epochs = 500
 
 #Train
-dataframe = pd.read_csv('/home/yupaporn/code/EffNet-Person-Classify/data_label_by_tan_09102023_splited_imgpath28_train_middleframe.csv') #แก้ data เปลี่ยนตาม fold
-base_dir = '/media/HDD/BearHouse-Person-Data/data_R3_middleframe/' #เปลี่ยนตาม fold
+dataframe = pd.read_csv('/home/yupaporn/codes/EffNet-Person-Classify/data_label_by_tan_09102023_splited_imgpath29_train_middleframe.csv') #แก้ data เปลี่ยนตาม fold
+base_dir = '/media/tohn/HDD/BearHouse-Person-Data/data_R3_middleframe/' #เปลี่ยนตาม fold
 os.chdir(base_dir)
 train_dir = os.path.join(base_dir, 'train')
 
 #validation
-valframe = pd.read_csv( '/home/yupaporn/code/EffNet-Person-Classify/data_label_by_tan_09102023_splited_imgpath28_val_middleframe.csv') #เปลี่ยนตาม fold
+valframe = pd.read_csv( '/home/yupaporn/codes/EffNet-Person-Classify/data_label_by_tan_09102023_splited_imgpath29_val_middleframe.csv') #เปลี่ยนตาม fold
 validation_dir = os.path.join(base_dir, 'validation')
 
 #load model
@@ -42,7 +42,7 @@ import efficientnet.tfkeras
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.models import load_model
 
-model_dir = '/media/SSD/BearHouse-Person-Model/models/B5R3_Category_500.h5'
+model_dir = '/media/tohn/HDD/BearHouse-Person-Model/models/B5R3_Category_500.h5'
 model = load_model(model_dir)
 height = width = model.input_shape[1]
 
@@ -80,9 +80,9 @@ test_generator = test_datagen.flow_from_dataframe(
         color_mode= 'rgb',
         class_mode='categorical')
 
-os.chdir('/media/HDD/BearHouse-Person-Model')
+os.chdir('/media/tohn/HDD/BearHouse-Person-Model')
 
-root_logdir = '/media/HDD/BearHouse-Person-Model/mylogsB5_Category_500_r4' 
+root_logdir = '/media/tohn/HDD/BearHouse-Person-Model/mylogsB5_Category_500_r4' 
 
 def get_run_logdir():
     import time

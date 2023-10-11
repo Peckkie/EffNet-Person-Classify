@@ -1,5 +1,4 @@
 import PIL
-
 from keras import models
 from keras import layers
 from tensorflow.keras import optimizers
@@ -13,11 +12,10 @@ import matplotlib.pyplot as plt
 import os
 from tensorflow.keras import callbacks
 import pandas as pd
-
 from tensorflow.keras import callbacks
 from keras.callbacks import Callback
 
-os.environ["CUDA_VISIBLE_DEVICES"]="1" 
+os.environ["CUDA_VISIBLE_DEVICES"]="0"
 
 from PIL import Image, ImageFile
 ImageFile.LOAD_TRUNCATED_IMAGES = True
@@ -26,47 +24,28 @@ batch_size = 8
 epochs = 500
 
 #Train
-dataframe = pd.read_csv('/home/yupaporn/code/EffNet-Person-Classify/data_label_by_tan_10082023_splited_imgpath28_train_1img.csv') 
-dataframe = dataframe[dataframe['img_no'] ==1
-base_dir = '/media/SSD/BearHouse-Person-Data/'
+dataframe = pd.read_csv('/home/yupaporn/codes/EffNet-Person-Classify/data_label_by_tan_09102023_splited_imgpath29_train_middleframe.csv') #แก้ data เปลี่ยนตาม fold
+base_dir = '/media/tohn/HDD/BearHouse-Person-Data/data_R3_middleframe/' #เปลี่ยนตาม fold
+dataframe = dataframe[dataframe['category'] != 'Children']
 os.chdir(base_dir)
 train_dir = os.path.join(base_dir, 'train')
 
 #validation
-valframe = pd.read_csv( '/home/yupaporn/code/EffNet-Person-Classify/data_label_by_tan_10082023_splited_imgpath28_val_1img.csv') 
-valframe = valframe[valframe['img_no'] ==1]
+valframe = pd.read_csv('/home/yupaporn/codes/EffNet-Person-Classify/data_label_by_tan_09102023_splited_imgpath29_val_middleframe.csv') #เปลี่ยนตาม fold
+valframe = valframe[valframe['category'] != 'Children']
 validation_dir = os.path.join(base_dir, 'validation')
 
-
-from efficientnet.keras import EfficientNetB5 as Net
-from efficientnet.keras import center_crop_and_resize, preprocess_input
-conv_base = Net(weights='imagenet')
-height = width = conv_base.input_shape[1]
-input_shape = (height, width, 3)
-
-# loading pretrained conv base model
-conv_base = Net(weights='imagenet', include_top=False, input_shape=input_shape)
-
-# create new model with a new classification layer
-x = conv_base.output  
-global_average_layer = layers.GlobalAveragePooling2D(name = 'head_pooling')(x)
-dropout_layer_1 = layers.Dropout(0.50,name = 'head_dropout')(global_average_layer)
-prediction_layer = layers.Dense(3, activation='softmax',name = 'prediction_layer')(dropout_layer_1)
-
-model = models.Model(inputs= conv_base.input, outputs=prediction_layer) 
-model.summary()
-
-#showing before&after freezing
-print('This is the number of trainable layers '
-      'before freezing the conv base:', len(model.trainable_weights))
-#conv_base.trainable = False  # freeze to keep convolutional base's weight
-for layer in conv_base.layers:
-    layer.trainable = False
-print('This is the number of trainable layers '
-      'after freezing the conv base:', len(model.trainable_weights))  #freez แล้วจะเหลือ max pool and dense
+#load model
+import efficientnet.tfkeras
 
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from tensorflow.keras.models import load_model
 
+model_dir = '/media/tohn/HDD/BearHouse-Person-Model/models/B5R3_Gender_500.h5'
+model = load_model(model_dir)
+height = width = model.input_shape[1]
+
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
 train_datagen = ImageDataGenerator(
       rescale=1./255,
       rotation_range=30,
@@ -99,9 +78,10 @@ test_generator = test_datagen.flow_from_dataframe(
         color_mode= 'rgb',
         class_mode='categorical')
 
-os.chdir('/media/SSD/BearHouse-Person-Model') #เปลี่ยนตาม fold
+os.chdir('/media/tohn/HDD/BearHouse-Person-Model')
 
-root_logdir = '/media/SSD/BearHouse-Person-Model/mylogsB5_500_r1'  #เปลี่ยน R1_1 เปลี่ยนตาม fold
+root_logdir = '/media/tohn/HDD/BearHouse-Person-Model/mylogsB5_Gender_500_r4' 
+
 def get_run_logdir():
     import time
     run_id = time.strftime("run_%Y_%m_%d_%H_%M_%S")
@@ -110,7 +90,8 @@ run_logdir = get_run_logdir()
 
 tensorboard_cb = callbacks.TensorBoard(log_dir = run_logdir)
 
-# os.makedirs("./models", exist_ok=True)
+
+# os.makedirs("./models_6", exist_ok=True)
 
 def avoid_error(gen):
     while True:
@@ -120,10 +101,27 @@ def avoid_error(gen):
         except:
             pass
 
- #Training
+#Unfreez
+model.trainable = True
+set_trainable = False
+for layer in model.layers:
+    if layer.name == 'block5a_se_excite':
+        set_trainable = True
+    if set_trainable:
+        layer.trainable = True
+    else:
+        layer.trainable = False
+print('This is the number of trainable layers '
+      'after freezing the conv base:', len(model.trainable_weights))  
+
 model.compile(loss='categorical_crossentropy',
               optimizer=optimizers.RMSprop(lr=2e-5),
               metrics=['acc'])
+
+run_logdir = get_run_logdir()
+
+tensorboard_cb = callbacks.TensorBoard(run_logdir)
+#early_stop_cb = callbacks.EarlyStopping(monitor='val_acc', patience=66, mode= 'max')
 
 history = model.fit_generator(
       avoid_error(train_generator),
@@ -133,7 +131,5 @@ history = model.fit_generator(
       validation_steps= len(valframe) //batch_size,
       callbacks = [tensorboard_cb])
 
-model.save('./models/B5R1_Gender_500.h5')
-
-
-
+model.save('./models/B5R4_Gender_500.h5')
+      

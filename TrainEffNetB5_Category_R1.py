@@ -21,19 +21,20 @@ os.environ["CUDA_VISIBLE_DEVICES"]="1"
 
 from PIL import Image, ImageFile
 ImageFile.LOAD_TRUNCATED_IMAGES = True
+from keras.utils import generic_utils
 
 batch_size = 8
 epochs = 500
 
 #Train
-dataframe = pd.read_csv('/home/yupaporn/code/EffNet-Person-Classify/data_label_by_tan_10082023_splited_imgpath28_train_1img.csv') 
-dataframe = dataframe[dataframe['img_no'] ==1
-base_dir = '/media/SSD/BearHouse-Person-Data/'
+dataframe = pd.read_csv('/home/yupaporn/codes/EffNet-Person-Classify/data_label_by_tan_10082023_splited_imgpath28_train_1img.csv') 
+dataframe = dataframe[dataframe['img_no'] ==1]
+base_dir = '/media/tohn/HDD/BearHouse/BearHouse-Person-Data/'
 os.chdir(base_dir)
 train_dir = os.path.join(base_dir, 'train')
 
 #validation
-valframe = pd.read_csv( '/home/yupaporn/code/EffNet-Person-Classify/data_label_by_tan_10082023_splited_imgpath28_val_1img.csv') 
+valframe = pd.read_csv('/home/yupaporn/codes/EffNet-Person-Classify/data_label_by_tan_10082023_splited_imgpath28_val_1img.csv') 
 valframe = valframe[valframe['img_no'] ==1]
 validation_dir = os.path.join(base_dir, 'validation')
 
@@ -99,9 +100,9 @@ test_generator = test_datagen.flow_from_dataframe(
         color_mode= 'rgb',
         class_mode='categorical')
 
-os.chdir('/media/SSD/BearHouse-Person-Model') #เปลี่ยนตาม fold
+os.chdir('/media/tohn/HDD/BearHouse/BearHouse-Person-Model') #เปลี่ยนตาม fold
 
-root_logdir = '/media/SSD/BearHouse-Person-Model/mylogsB5_500_category_r1'  #เปลี่ยน R1_1 เปลี่ยนตาม fold
+root_logdir = '/media/tohn/HDD/BearHouse/BearHouse-Person-Model/mylogsB5_500_category_r1'  #เปลี่ยน R1_1 เปลี่ยนตาม fold
 def get_run_logdir():
     import time
     run_id = time.strftime("run_%Y_%m_%d_%H_%M_%S")
